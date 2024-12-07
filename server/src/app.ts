@@ -7,7 +7,7 @@ import { downloadFiles } from "./download";
 import { downloads } from "./data";
 import { existsSync } from "fs";
 import path from "path";
-import { createHash } from "crypto";
+import { cleanUp } from "./cleanUp";
 
 const app = express();
 const server = createServer(app);
@@ -15,7 +15,8 @@ const port = process.env.PORT || 5500;
 app.use(express.json());
 app.use(cors());
 
-
+//clean up downloads folder every 10 minutes
+cleanUp();
 
 //reading downloads data from json file
 downloads.init();

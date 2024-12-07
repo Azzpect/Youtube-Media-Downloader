@@ -1,4 +1,4 @@
-import { createWriteStream, unlink, unlinkSync } from "fs";
+import { createWriteStream, unlinkSync } from "fs";
 import ytdl from "@distube/ytdl-core";
 import { spawn } from "child_process";
 import { downloads } from "./data";
@@ -46,7 +46,7 @@ export async function downloadFiles(id: string, url: string) {
         await Promise.all([videoDownload, audioDownload])
 
         downloads.updateDownloadStatus(id, "merging")
-        
+
         await mergeVideoAndAudio(audioFilePath, videoFilePath, outputFilePath)
         
     }

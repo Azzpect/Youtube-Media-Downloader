@@ -16,6 +16,7 @@ type Download = {
 type DownloadObj = {
   url: string;
   status: DownloadStatus;
+  createAt: number;
 };
 type DownloadStatus =
   | "downloading"
@@ -34,7 +35,7 @@ export const downloads: Downloads = {
     url: string,
     status: DownloadStatus = "not started"
   ) => {
-    downloads.downloads[id] = { url: url, status: status };
+    downloads.downloads[id] = { url: url, status: status, createAt: new Date().getTime() };
     downloads.saveDownloads();
   },
   updateDownloadStatus: (id: string, status: DownloadStatus) => {
