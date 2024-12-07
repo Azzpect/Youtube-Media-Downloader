@@ -1,0 +1,6 @@
+*.exe binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.dll binary
+*.o   binary
