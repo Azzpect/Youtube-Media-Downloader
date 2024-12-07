@@ -3,7 +3,7 @@ import { Server, Socket } from "socket.io";
 import { createServer } from "http";
 import cors from "cors";
 import ytdl from "@distube/ytdl-core";
-import { downloadAudioFile, downloadVideoFile } from "./download";
+import { downloadFiles } from "./download";
 import { downloads } from "./data";
 import { existsSync } from "fs";
 import path from "path";
@@ -85,9 +85,10 @@ ws.on("connection", (socket) => {
     const downloadObj = downloads.getDownload(id)
     if(downloadObj !== undefined && (downloadObj.status === "not started" || downloadObj.status === "failed")) {
 
-        await downloadVideoFile(id, downloadObj.url)
+        await downloadFiles(id, downloadObj.url)
         downloads.updateDownloadStatus(id, "complete")
-        socketList[id].forEach(s => s.emit("download-complete", { status: "complete", url: `download/${id}.mp4` }))
+        let downloadURL = type === "video" ? `download/${id}.mp4` : `download/${id}-audio.mp4`
+        socketList[id].forEach(s => s.emit("download-complete", { status: "complete", url: downloadURL }))
         delete socketList[id];
     }
     else if(downloadObj !== undefined && downloadObj.status === "complete") {
