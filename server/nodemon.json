@@ -1,0 +1,6 @@
+{
+    "watch": ["dist"],
+    "ext": "js,json",
+    "exec": "node --env-file=.env.local ./dist/app.js",
+    "delay": "2500"
+}
