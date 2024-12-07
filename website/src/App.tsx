@@ -1,17 +1,27 @@
 import { useEffect, useState, useRef } from "react"
 import "./styles/App.css"
-
+import io, { Socket } from "socket.io-client"
 
 
 function App() {
 
   const [media, setMedia] = useState<{ id: string, status: "valid" | "invalid" }>({ id: "", status: "invalid" })
   const inputRef = useRef<HTMLInputElement>(null)
+  const wsRef = useRef<Socket>()
 
 
   useEffect(() => {
-    
-  })
+    if(media.status === "valid" && wsRef.current === undefined) {
+      wsRef.current = io(import.meta.env.VITE_API_SERVER as string)
+    }
+
+    return () => {
+      console.log("cleanup");
+      wsRef.current?.disconnect()
+      wsRef.current = undefined
+    }
+
+  }, [media])
 
   return (
     <>
@@ -36,7 +46,10 @@ function App() {
           {media.status === "valid" &&
           <div className="flex flex-col items-center my-8">
             <iframe src={`https://www.youtube.com/embed/${media.id}`} width="560" height="315"></iframe>
-            <a href="#" className="bg-white text-background text-sm rounded-lg p-2 my-3">Start Processing</a>
+            <a href="#" className="bg-white text-background text-sm rounded-lg p-2 my-3" onClick={() => {
+              const ws = io(import.meta.env.VITE_API_SERVER as string)
+              ws.emit("start-processing", media.id)
+            }}>Start Processing</a>
           </div>
           }
         </div>
