@@ -1,19 +1,21 @@
-import { createWriteStream } from "fs";
+import { createWriteStream, unlink, unlinkSync } from "fs";
 import ytdl from "@distube/ytdl-core";
 import { spawn } from "child_process";
+import { downloads } from "./data";
 
 const ffmpegPath = "./ffmpeg.exe";
 
-export async function download(id: string, url: string) {
+export async function downloadFile(id: string, url: string) {
 
     const audioFilePath = `./downloads/${id}-audio.mp4`;
     const videoFilePath = `./downloads/${id}-video.mp4`;
     const outputFilePath = `./downloads/${id}.mp4`;
-
+    
     try {
         const audiofileStream = createWriteStream(audioFilePath)
         const videofileStream = createWriteStream(videoFilePath)
         
+        downloads.updateDownloadStatus(id, "downloading")
 
         const videoDownload = new Promise<void>((resolve, reject) => {
             console.log("starting video download");
@@ -39,6 +41,7 @@ export async function download(id: string, url: string) {
         })
 
         await Promise.all([videoDownload, audioDownload])
+        downloads.updateDownloadStatus(id, "merging")
         await mergeVideoAndAudio(audioFilePath, videoFilePath, outputFilePath)
         
     }
@@ -47,6 +50,8 @@ export async function download(id: string, url: string) {
     }
     finally {
         console.log("closing stream");
+        unlinkSync(audioFilePath)
+        unlinkSync(videoFilePath)
     }
 }
 

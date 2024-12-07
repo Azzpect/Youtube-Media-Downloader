@@ -6,17 +6,29 @@ import io, { Socket } from "socket.io-client"
 function App() {
 
   const [media, setMedia] = useState<{ id: string, status: "valid" | "invalid" }>({ id: "", status: "invalid" })
+  const [download, setDownload] = useState<{status: undefined | "complete" | "failed", url: string}>()
   const inputRef = useRef<HTMLInputElement>(null)
   const wsRef = useRef<Socket>()
 
 
   useEffect(() => {
-    if(media.status === "valid" && wsRef.current === undefined) {
+
+    if(wsRef.current === undefined && media.status === "valid") {
       wsRef.current = io(import.meta.env.VITE_API_SERVER as string)
     }
 
+
+    wsRef.current?.on("download-complete", ({status, url}) => {
+      setDownload({status: status, url: `${import.meta.env.VITE_API_SERVER as string}/${url}`})
+    })
+
+
+    wsRef.current?.on("download-started", () => {
+      console.log("started");
+    })
+
+
     return () => {
-      console.log("cleanup");
       wsRef.current?.disconnect()
       wsRef.current = undefined
     }
@@ -39,6 +51,7 @@ function App() {
               if(inputRef.current !== null) {
                 inputRef.current.value = ""
                 setMedia({ id: "", status: "invalid" })
+                setDownload({status: undefined, url: ""})
               }
 
             }}>Reset</button>
@@ -46,10 +59,11 @@ function App() {
           {media.status === "valid" &&
           <div className="flex flex-col items-center my-8">
             <iframe src={`https://www.youtube.com/embed/${media.id}`} width="560" height="315"></iframe>
-            <a href="#" className="bg-white text-background text-sm rounded-lg p-2 my-3" onClick={() => {
-              const ws = io(import.meta.env.VITE_API_SERVER as string)
-              ws.emit("start-processing", media.id)
-            }}>Start Processing</a>
+            {download?.status !== "complete" && <a className="bg-white text-background text-sm rounded-lg p-2 my-3" onClick={() => {
+              wsRef.current?.emit("start-processing", media.id)
+            }}>Start Processing</a>}
+            {download?.status === "complete" && <a href={download.url} className="bg-white text-background text-sm rounded-lg p-2 my-3" download={true}>Download</a>}
+            {download?.status === "failed" && <a className="bg-red-500 text-white text-background text-sm rounded-lg p-2 my-3" download={true}>Failed</a>}
           </div>
           }
         </div>

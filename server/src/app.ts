@@ -1,10 +1,12 @@
 import express, { Request, Response } from "express";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { createServer } from "http";
 import cors from "cors";
 import ytdl from "@distube/ytdl-core";
-import { readFileSync, writeFileSync } from "fs";
-import { download } from "./download";
+import { downloadFile } from "./download";
+import { downloads } from "./data";
+import { existsSync } from "fs";
+import path from "path";
 
 const app = express();
 const server = createServer(app);
@@ -12,51 +14,7 @@ const port = process.env.PORT || 5500;
 app.use(express.json());
 app.use(cors());
 
-interface Downloads {
-  downloads: Download;
-  getDownload: (id: string) => DownloadObj | undefined;
-  addDownload: (id: string, url: string, status?: DownloadStatus) => void;
-  updateDownloadStatus: (id: string, status: DownloadStatus) => void;
-  saveDownloads: () => void;
-  init: () => void;
-}
 
-type Download = {
-  [id: string]: DownloadObj;
-};
-
-type DownloadObj = {
-  url: string;
-  status: DownloadStatus;
-};
-type DownloadStatus =
-  | "downloading"
-  | "complete"
-  | "failed"
-  | "merging"
-  | "not started";
-
-const downloads: Downloads = {
-    downloads: {},
-    getDownload: (id: string) => {
-        return downloads.downloads[id];
-    },
-    addDownload: (id: string, url: string, status: DownloadStatus = "not started") => {
-        downloads.downloads[id] = { url: url, status: status };
-        downloads.saveDownloads();
-    },
-    updateDownloadStatus: (id: string, status: DownloadStatus) => {
-        downloads.downloads[id].status = status;
-        downloads.saveDownloads();
-    },
-    saveDownloads: () => {
-        writeFileSync("./downloads.json", JSON.stringify(downloads.downloads, null, 2))
-    },
-    init: () => {
-        const data = JSON.parse(readFileSync("./downloads.json", "utf-8"));
-        downloads.downloads = data;
-    }
-}
 
 //reading downloads data from json file
 downloads.init();
@@ -82,25 +40,58 @@ app.get("/get-url-data", (req: Request, res: Response) => {
   res.json({ id: id, status: status });
 });
 
+app.get("/download/:filename", (req: Request, res: Response) => {
+
+  const filename = req.params.filename;
+  console.log(filename);
+  if(existsSync(path.join(__dirname, `../downloads/${filename}`))) {
+    res.download(path.join(__dirname, `../downloads/${filename}`), (err) => {
+      if(err) {
+        console.log("Error downloading file: ");
+        res.status(500).send("Error downloading file");
+      }
+    })
+  }
+  else {
+    res.status(500).send("Error downloading file");
+  }
+
+})
+
 const ws = new Server(server, {
   cors: {
     origin: "*",
   },
 });
 
+type SocketList = {
+  [id: string]: Socket[]
+}
+
+let socketList: SocketList = {}
+
 ws.on("connection", (socket) => {
   console.log(`User connected with socket id: ${socket.id}`);
 
   socket.on("start-processing", async (id: string) => {
+
+    if(id in socketList) {
+      socketList[id].push(socket)
+    }
+    else {
+      socketList[id] = [socket]
+    }
+
     console.log(`Processing started for video id: ${id}`);
     const downloadObj = downloads.getDownload(id)
-    if(downloadObj !== undefined && downloadObj.status === "not started") {
-        console.log("Starting download");
-
-        await download(id, downloadObj.url)
+    if(downloadObj !== undefined && (downloadObj.status === "not started" || downloadObj.status === "failed")) {
+        await downloadFile(id, downloadObj.url)
+        downloads.updateDownloadStatus(id, "complete")
+        socketList[id].forEach(s => s.emit("download-complete", { status: "complete", url: `download/${id}.mp4` }))
+        delete socketList[id];
     }
-    else
-        console.log("Error starting download");
+    else if(downloadObj !== undefined && downloadObj.status === "complete")
+      socket.emit("download-complete", { status: "complete", url: `download/${id}.mp4` })
   });
 
   socket.on("disconnect", () => {
