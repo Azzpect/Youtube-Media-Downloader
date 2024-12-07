@@ -1,3 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+@layer components {
+    .progress {
+        width: 0;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        background-color: white;
+        border-radius: 0.8rem;
+        animation: progress 10s ease-in-out infinite;
+    }
+
+    @keyframes progress {
+        from {
+            width: 0;
+        }
+        to {
+            width: 100%;
+        }
+    }
+}
