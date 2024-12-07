@@ -5,14 +5,13 @@ import { downloads } from "./data";
 
 const ffmpegPath = "./ffmpeg.exe";
 
-export async function downloadFile(id: string, url: string) {
+export async function downloadVideoFile(id: string, url: string) {
 
     const audioFilePath = `./downloads/${id}-audio.mp4`;
     const videoFilePath = `./downloads/${id}-video.mp4`;
     const outputFilePath = `./downloads/${id}.mp4`;
     
     try {
-        const audiofileStream = createWriteStream(audioFilePath)
         const videofileStream = createWriteStream(videoFilePath)
         
         downloads.updateDownloadStatus(id, "downloading")
@@ -27,20 +26,9 @@ export async function downloadFile(id: string, url: string) {
             console.log("video download complete");
         })
 
-        const audioDownload = new Promise<void>((resolve, reject) => {
-            console.log("starting audio download");
-            const downstream = ytdl(url, {
-                quality: "highestaudio",
-                filter: "audioonly",
-            })
-            downstream.pipe(audiofileStream)
-            downstream.on("error", reject)
-            audiofileStream.on("finish", resolve)
-            audiofileStream.on("error", reject)
-            console.log("audio download complete");
-        })
+        
 
-        await Promise.all([videoDownload, audioDownload])
+        await Promise.all([videoDownload, downloadAudioFile(id, url)])
         downloads.updateDownloadStatus(id, "merging")
         await mergeVideoAndAudio(audioFilePath, videoFilePath, outputFilePath)
         
@@ -50,9 +38,27 @@ export async function downloadFile(id: string, url: string) {
     }
     finally {
         console.log("closing stream");
-        unlinkSync(audioFilePath)
         unlinkSync(videoFilePath)
     }
+}
+
+export async function downloadAudioFile(id: string, url: string) {
+    
+    const audioFilePath = `./downloads/${id}-audio.mp4`;
+
+    const audiofileStream = createWriteStream(audioFilePath)
+    return new Promise<void>((resolve, reject) => {
+        console.log("starting audio download");
+        const downstream = ytdl(url, {
+            quality: "highestaudio",
+            filter: "audioonly",
+        })
+        downstream.pipe(audiofileStream)
+        downstream.on("error", reject)
+        audiofileStream.on("finish", resolve)
+        audiofileStream.on("error", reject)
+        console.log("audio download complete");
+    })
 }
 
 async function mergeVideoAndAudio(audioFilePath: string, videoFilePath: string, outputFilePath: string) {

@@ -3,10 +3,11 @@ import { Server, Socket } from "socket.io";
 import { createServer } from "http";
 import cors from "cors";
 import ytdl from "@distube/ytdl-core";
-import { downloadFile } from "./download";
+import { downloadAudioFile, downloadVideoFile } from "./download";
 import { downloads } from "./data";
 import { existsSync } from "fs";
 import path from "path";
+import { createHash } from "crypto";
 
 const app = express();
 const server = createServer(app);
@@ -43,7 +44,6 @@ app.get("/get-url-data", (req: Request, res: Response) => {
 app.get("/download/:filename", (req: Request, res: Response) => {
 
   const filename = req.params.filename;
-  console.log(filename);
   if(existsSync(path.join(__dirname, `../downloads/${filename}`))) {
     res.download(path.join(__dirname, `../downloads/${filename}`), (err) => {
       if(err) {
@@ -73,7 +73,7 @@ let socketList: SocketList = {}
 ws.on("connection", (socket) => {
   console.log(`User connected with socket id: ${socket.id}`);
 
-  socket.on("start-processing", async (id: string) => {
+  socket.on("start-processing", async (id: string, type: string) => {
 
     if(id in socketList) {
       socketList[id].push(socket)
@@ -82,16 +82,21 @@ ws.on("connection", (socket) => {
       socketList[id] = [socket]
     }
 
-    console.log(`Processing started for video id: ${id}`);
     const downloadObj = downloads.getDownload(id)
     if(downloadObj !== undefined && (downloadObj.status === "not started" || downloadObj.status === "failed")) {
-        await downloadFile(id, downloadObj.url)
+
+        await downloadVideoFile(id, downloadObj.url)
         downloads.updateDownloadStatus(id, "complete")
         socketList[id].forEach(s => s.emit("download-complete", { status: "complete", url: `download/${id}.mp4` }))
         delete socketList[id];
     }
-    else if(downloadObj !== undefined && downloadObj.status === "complete")
-      socket.emit("download-complete", { status: "complete", url: `download/${id}.mp4` })
+    else if(downloadObj !== undefined && downloadObj.status === "complete") {
+      let downloadUrl = type === "video" ? `download/${id}.mp4` : `download/${id}-audio.mp4`
+      socket.emit("download-complete", { status: "complete", url: downloadUrl })
+    }
+    else {
+      socket.emit("download-complete", { status: "failed", url: "" })
+    }
   });
 
   socket.on("disconnect", () => {

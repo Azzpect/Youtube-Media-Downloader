@@ -8,6 +8,7 @@ function App() {
   const [media, setMedia] = useState<{ id: string, status: "valid" | "invalid" }>({ id: "", status: "invalid" })
   const [download, setDownload] = useState<{status: undefined | "complete" | "failed", url: string}>()
   const inputRef = useRef<HTMLInputElement>(null)
+  const typeRef = useRef<HTMLSelectElement>(null)
   const wsRef = useRef<Socket>()
 
 
@@ -59,11 +60,17 @@ function App() {
           {media.status === "valid" &&
           <div className="flex flex-col items-center my-8">
             <iframe src={`https://www.youtube.com/embed/${media.id}`} width="560" height="315"></iframe>
-            {download?.status !== "complete" && <a className="bg-white text-background text-sm rounded-lg p-2 my-3" onClick={() => {
-              wsRef.current?.emit("start-processing", media.id)
-            }}>Start Processing</a>}
-            {download?.status === "complete" && <a href={download.url} className="bg-white text-background text-sm rounded-lg p-2 my-3" download={true}>Download</a>}
-            {download?.status === "failed" && <a className="bg-red-500 text-white text-background text-sm rounded-lg p-2 my-3" download={true}>Failed</a>}
+            <div className="flex items-center justify-between w-full">
+              <select ref={typeRef} className="py-1 px-2 rounded-lg" onChange={() => {setDownload({status: undefined, url: ""})}}>
+                <option value="video">Video</option>
+                <option value="Audio">Audio</option>
+              </select>
+              {download?.status !== "complete" && <button className="bg-white text-background text-sm rounded-lg p-2 my-3" onClick={() => {
+                wsRef.current?.emit("start-processing", media.id, typeRef.current?.value)
+              }}>Start Processing</button>}
+              {download?.status === "complete" && <a href={download.url} className="bg-white text-background text-sm rounded-lg p-2 my-3" download={true}>Download</a>}
+              {download?.status === "failed" && <button className="bg-red-500 text-white text-background text-sm rounded-lg p-2 my-3">Failed</button>}
+            </div>
           </div>
           }
         </div>
