@@ -39,8 +39,8 @@ function App() {
       <div className="bg-primary w-screen h-screen">
         <div className="w-[85vw] mx-auto flex flex-col items-center">
           <h1 className="text-3xl text-white font-bold my-8">Download Your Favourite Youtube Videos</h1>
-          <div className="w-[90%] flex justify-center items-center">
-            <input ref={inputRef} type="text" className="outline-none bg-[#313131] text-white text-sm px-2 py-1 w-1/2 rounded-lg" placeholder="Enter Youtube Video URL...."/>
+          <div className="w-[90%] flex flex-wrap gap-[1.2rem] justify-center items-center">
+            <input ref={inputRef} type="text" className="outline-none bg-[#313131] text-white text-sm px-2 py-1 min-w-[50vw] max-w-[70vw] rounded-lg" placeholder="Enter Youtube Video URL...."/>
             <button className="bg-white text-background text-sm rounded-lg p-2 mx-3" onClick={ async () => {
               const res = await fetch(`${import.meta.env.VITE_API_SERVER as string}/get-url-data?url=${inputRef.current?.value}`)
               const data = await res.json()
@@ -56,8 +56,8 @@ function App() {
             }}>Reset</button>
           </div>
           {media.status === "valid" &&
-          <div className="flex flex-col items-center my-8">
-            <iframe src={`https://www.youtube.com/embed/${media.id}`} width="560" height="315"></iframe>
+          <div className="flex flex-col items-center my-8 w-[90vw] sm:w-[50vw] h-[50vh]">
+            <iframe src={`https://www.youtube.com/embed/${media.id}`} className="w-[90%] h-[80%]"></iframe>
             {showProgress &&
             <div className="w-full h-[2rem] my-4 relative">
               <div className="progress"></div>
