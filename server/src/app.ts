@@ -21,7 +21,15 @@ cleanUp();
 //reading downloads data from json file
 downloads.init();
 
+
+app.use("/assets", express.static(path.join(__dirname, "../web/assets")))
+
+
 app.get("/", (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, "../web/index.html"))
+})
+
+app.get("/get-download", (req: Request, res: Response) => {
   // res.sendFile("./index.html")
   const {id} = req.query;
   res.json({ message: downloads.getDownload(id as string) });
@@ -45,8 +53,8 @@ app.get("/get-url-data", (req: Request, res: Response) => {
 app.get("/download/:filename", (req: Request, res: Response) => {
 
   const filename = req.params.filename;
-  if(existsSync(path.join(__dirname, `../downloads/${filename}`))) {
-    res.download(path.join(__dirname, `../downloads/${filename}`), (err) => {
+  if(existsSync(path.join(__dirname, `${process.env.DOWNLOAD_LOC}${filename}`))) {
+    res.download(path.join(__dirname, `${process.env.DOWNLOAD_LOC}${filename}`), (err) => {
       if(err) {
         console.log("Error downloading file: ");
         res.status(500).send("Error downloading file");

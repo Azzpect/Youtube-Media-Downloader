@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev:server": "concurrently \"npx tsc --watch\" \"npx nodemon\""
+    "dev:server": "concurrently \"npx tsc --watch\" \"npx nodemon\"",
+    "prod": "node --env-file=.env app.js"
   },
   "keywords": [],
   "author": "",

@@ -1,6 +1,6 @@
 import path from "path";
 import { downloads } from "./data";
-import { writeFileSync, unlinkSync } from "fs";
+import { unlinkSync } from "fs";
 
 
 export function cleanUp(): void {

@@ -26,3 +26,7 @@ downloads/
 *.njsproj
 *.sln
 *.sw?
+
+
+#production
+prod/

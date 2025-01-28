@@ -2,14 +2,15 @@ import { createWriteStream, unlinkSync } from "fs";
 import ytdl from "@distube/ytdl-core";
 import { spawn } from "child_process";
 import { downloads } from "./data";
+import path from "path";
 
 const ffmpegPath = "./ffmpeg.exe";
 
 export async function downloadFiles(id: string, url: string) {
 
-    const audioFilePath = `./downloads/${id}-audio.mp4`;
-    const videoFilePath = `./downloads/${id}-video.mp4`;
-    const outputFilePath = `./downloads/${id}.mp4`;
+    const audioFilePath = path.join(__dirname, `${process.env.DOWNLOAD_LOC}${id}-audio.mp4`);
+    const videoFilePath = path.join(__dirname, `${process.env.DOWNLOAD_LOC}${id}-video.mp4`);
+    const outputFilePath = path.join(__dirname, `${process.env.DOWNLOAD_LOC}${id}.mp4`);
     
     try {
         const videofileStream = createWriteStream(videoFilePath)

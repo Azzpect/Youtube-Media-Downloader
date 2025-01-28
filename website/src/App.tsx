@@ -21,7 +21,7 @@ function App() {
 
 
     wsRef.current?.on("download-complete", ({status, url}) => {
-      setDownload({status: status, url: `${import.meta.env.VITE_API_SERVER as string}/${url}`})
+      setDownload({status: status, url: `/${url}`})
       setShowProgress(false)
     })
 
@@ -42,7 +42,7 @@ function App() {
           <div className="w-[90%] flex flex-wrap gap-[1.2rem] justify-center items-center">
             <input ref={inputRef} type="text" className="outline-none bg-[#313131] text-white text-sm px-2 py-1 min-w-[50vw] max-w-[70vw] rounded-lg" placeholder="Enter Youtube Video URL...."/>
             <button className="bg-white text-background text-sm rounded-lg p-2 mx-3" onClick={ async () => {
-              const res = await fetch(`${import.meta.env.VITE_API_SERVER as string}/get-url-data?url=${inputRef.current?.value}`)
+              const res = await fetch(`/get-url-data?url=${inputRef.current?.value}`)
               const data = await res.json()
               setMedia(data)
             }}>Search</button>
